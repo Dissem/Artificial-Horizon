@@ -3,7 +3,6 @@ package ch.dissem.apps.down;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Sensor;
 import ch.dissem.libraries.math.Quaternion;
 import rajawali.BaseObject3D;
 import rajawali.lights.DirectionalLight;
@@ -51,6 +50,6 @@ public class HorizonRenderer extends RajawaliRenderer {
 
         Quaternion orientation = sensorService.getOrientation();
         double[] rot = orientation.getEulerAngles();
-        sphere.setRotation((float) (rot[0] * DEGREES - 90), (float) (rot[2] * DEGREES - 90), (float) (rot[1] * DEGREES));
+        sphere.setRotation((float) (rot[0] * DEGREES - 90), (float) (rot[2] * DEGREES - 90), (float) (-rot[1] * DEGREES));
     }
 }
