@@ -5,9 +5,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 import ch.dissem.libraries.math.Quaternion;
 
-import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.util.FloatMath.sqrt;
@@ -29,12 +32,30 @@ public class SensorService implements SensorEventListener {
     private long lastGyroscopeTimestamp;
 
     private SensorFusionFilter filter;
+    private ScheduledExecutorService timer;
 
     public SensorService(Context ctx) {
         sensorManager = (SensorManager) ctx.getSystemService(SENSOR_SERVICE);
-        filter = new SensorFusionFilter(0.97f);
+        filter = new SensorFusionFilter(0.97f, 0.03f);
         initListeners();
-        new Timer().scheduleAtFixedRate(filter, 1000, 30);
+        resume();
+    }
+
+    public void pause() {
+        timer.shutdown();
+        try {
+            timer.awaitTermination(100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.e("SensorService", e.getMessage(), e);
+        }
+        timer = null;
+    }
+
+    public void resume() {
+        if (timer == null) {
+            timer = Executors.newSingleThreadScheduledExecutor();
+            timer.scheduleAtFixedRate(filter, 0, 30, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void initListeners() {
@@ -43,6 +64,9 @@ public class SensorService implements SensorEventListener {
                 SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+                SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
                 SensorManager.SENSOR_DELAY_FASTEST);
     }
 
@@ -55,7 +79,14 @@ public class SensorService implements SensorEventListener {
             case Sensor.TYPE_GYROSCOPE:
                 onGyroscopeChanged(event);
                 break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                onCompassChanged(event);
+                break;
         }
+    }
+
+    private void onCompassChanged(SensorEvent event) {
+        filter.updateCompass(H(event.values));
     }
 
     private void onGyroscopeChanged(SensorEvent event) {

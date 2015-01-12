@@ -1,11 +1,16 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "ch.dissem.apps.down"
+        applicationId "ch.dissem.apps.artificialhorizon"
         minSdkVersion 15
         targetSdkVersion 21
         versionCode 1
@@ -22,4 +27,5 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'rajawali.framework:rajawaliframework:1'
 }
